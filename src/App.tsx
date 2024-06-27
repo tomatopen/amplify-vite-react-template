@@ -18,7 +18,7 @@ function App() {
   }
   
   function deleteTodo(id: string) {
-    client.models.Todo.delete({ id })
+    client.models.Todo.delete({ id });
   }
   
   return (
