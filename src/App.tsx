@@ -1,24 +1,26 @@
 import { useEffect, useState } from "react";
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
+import { generateClient } from "@aws-amplify/datastore"; // aws-amplify/data から aws-amplify/datastore に変更
+import { Todo } from "../models"; // import type { Schema } from "../amplify/data/resource"; を削除
 
-const client = generateClient<Schema>();
+const client = generateClient(); // generateClient<Schema>(); を generateClient(); に変更
 
 function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const [todos, setTodos] = useState<Todo[]>([]); // Array<Schema["Todo"]["type"]> を Todo[] に変更
 
   useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
+    const subscription = client.observe(Todo).subscribe({ // client.models.Todo.observeQuery() を client.observe(Todo) に変更
+      next: (data) => setTodos([...data]), // data.items を data に変更
     });
+
+    return () => subscription.unsubscribe(); // useEffect 内でのクリーンアップ追加
   }, []);
 
   function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
+    client.create(new Todo({ content: window.prompt("Todo content") })); // client.models.Todo.create({ content: window.prompt("Todo content") }); を修正
   }
   
   function deleteTodo(id: string) {
-    client.models.Todo.delete({ id });
+    client.delete(Todo, id); // client.models.Todo.delete({ id }); を修正
   }
   
   return (
@@ -27,13 +29,13 @@ function App() {
       <button onClick={createTodo}>+ new</button>
       <ul>
         {todos.map((todo) => (
-        
           <li 
             onClick={() => deleteTodo(todo.id)}
-            key={todo.id}>
+            key={todo.id}
+          >
             {todo.content}
           </li>
-        )}
+        ))}
       </ul>
       <div>
         🥳 App successfully hosted. Try creating a new todo.
